@@ -56,7 +56,7 @@ interface_render_statusbar()
 
 	wclear(termconfig.statusbar_window);
 	wattron(termconfig.statusbar_window, COLOR_PAIR(1));
-	wprintw_padding(termconfig.statusbar_window, 3, x, "Welcome to FileManager -- version 1.0");
+	wprintw_padding(termconfig.statusbar_window, 3, x, "Welcome to Blade File Manager -- version 1.0");
 	wattroff(termconfig.statusbar_window, COLOR_PAIR(1));
 	wrefresh(termconfig.statusbar_window);
 }
