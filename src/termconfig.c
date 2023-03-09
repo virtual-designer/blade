@@ -3,6 +3,10 @@
 #include <curses.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <stdbool.h>
+#include <string.h>
+#include <error.h>
+#include <errno.h>
 
 #include "termconfig.h"
 #include "main.h"
@@ -36,4 +40,36 @@ termconfig_init()
     termconfig.entry_selected = 0;
     termconfig.filelist_window = newwin(termconfig.rows - 1, termconfig.cols - 1, 1, 0);
     termconfig.statusbar_window = newwin(1, termconfig.cols - 1, 0, 0);
+
+    if (argv_list.argc >= 2) {
+        if (argv_list.argv[1][0] == '/') {
+            if (chdir(argv_list.argv[1]) != 0) {
+                system_error("chdir failed", true);
+            }
+        }
+        else {
+            char *cwd = getcwd(NULL, 0);
+
+            if (cwd == NULL) {
+                system_error("getcwd failed", true);
+            }
+
+            char buf[strlen(argv_list.argv[1]) + strlen(cwd) + 1];
+
+            sprintf(buf, "%s/%s", cwd, argv_list.argv[1]);
+
+            free(cwd);
+
+            if (chdir(buf) != 0) {
+                endwin();
+                error(EXIT_FAILURE, errno, "chdir failed: %s", buf);
+            }
+        }
+    }
+
+    termconfig.cwd = getcwd(NULL, 0);
+
+    if (termconfig.cwd == NULL) {
+        system_error("getcwd failed", true);
+    }
 }

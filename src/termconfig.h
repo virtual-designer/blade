@@ -8,6 +8,7 @@ typedef struct {
     int entry_selected;
     int entry_count;
     WINDOW *filelist_window, *statusbar_window;
+    char *cwd;
 } termconfig_t;
 
 extern termconfig_t termconfig;

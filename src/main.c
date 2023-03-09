@@ -13,6 +13,8 @@
 
 #define _GNU_SOURCE
 
+argv_t argv_list = { 0, NULL };
+
 static void
 interface_atexit() 
 {
@@ -53,10 +55,15 @@ static void
 interface_render_statusbar()
 {	
 	int x = getmaxx(stdscr);
+	char *welcome = "Welcome to Blade File Manager -- version 1.0";
+	char cwd[strlen(termconfig.cwd) + 2];
+
+	sprintf(cwd, "[%s]", termconfig.cwd);
 
 	wclear(termconfig.statusbar_window);
 	wattron(termconfig.statusbar_window, COLOR_PAIR(1));
-	wprintw_padding(termconfig.statusbar_window, 3, x, "Welcome to Blade File Manager -- version 1.0");
+	wprintw_padding(termconfig.statusbar_window, 3, 0, welcome);
+	wprintw_padding(termconfig.statusbar_window, 5, x - strlen(welcome) - 3, cwd);
 	wattroff(termconfig.statusbar_window, COLOR_PAIR(1));
 	wrefresh(termconfig.statusbar_window);
 }
@@ -159,6 +166,9 @@ interface_read_keys()
 int
 main(int argc, char **argv)
 {
+	argv_list.argc = argc;
+	argv_list.argv = argv;
+
 	atexit(&interface_atexit);
 
 	interface_initialize();
