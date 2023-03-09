@@ -45,19 +45,26 @@ interface_initialize()
 	noecho();
 	keypad(stdscr, true);
 	termconfig_init();
+	keypad(termconfig.filelist_window, true);
+	box(termconfig.filelist_window, 1, 1);
 }
 
 static void 
 interface_render_statusbar()
 {	
-	attron(COLOR_PAIR(1));
-	printw_padding(3, -1, "Welcome to FileManager -- version 1.0");
-	attroff(COLOR_PAIR(1));
+	int x = getmaxx(stdscr);
+
+	wclear(termconfig.statusbar_window);
+	wattron(termconfig.statusbar_window, COLOR_PAIR(1));
+	wprintw_padding(termconfig.statusbar_window, 3, x, "Welcome to FileManager -- version 1.0");
+	wattroff(termconfig.statusbar_window, COLOR_PAIR(1));
+	wrefresh(termconfig.statusbar_window);
 }
 
 static void 
 interface_render_rows()
 {
+	wclear(termconfig.filelist_window);
 	struct dirent *dirent;
 
 	DIR *dir = opendir(".");
@@ -70,13 +77,13 @@ interface_render_rows()
 		}
 
 		if (termconfig.entry_selected == i) {
-			attron(COLOR_PAIR(2));
+			wattron(termconfig.filelist_window, COLOR_PAIR(2));
 		}
 
-		printw_padding(1, -1, dirent->d_name);
+		wprintw_padding(termconfig.filelist_window, 1, getmaxx(termconfig.filelist_window) - strlen(dirent->d_name) - 1, dirent->d_name);
 
 		if (termconfig.entry_selected == i) {
-			attroff(COLOR_PAIR(2));
+			wattroff(termconfig.filelist_window, COLOR_PAIR(2));
 		}
 
 		i++;
@@ -85,21 +92,21 @@ interface_render_rows()
 	termconfig.entry_count = i;
 
 	closedir(dir);
+	wrefresh(termconfig.filelist_window);
 }
 
 static void 
 interface_render()
 {	
-	clear();
 	interface_render_statusbar();
 	interface_render_rows();
-	move(1, 0);
+	wmove(termconfig.filelist_window, 0, getcurx(termconfig.filelist_window));
 }
 
 static bool 
 interface_respond_to_keypress(int key) 
 {
-	int x = getcurx(stdscr), y = getcury(stdscr);
+	int x = getcurx(termconfig.filelist_window), y = getcury(termconfig.filelist_window);
 	
 	switch (key) 
 	{
@@ -108,20 +115,20 @@ interface_respond_to_keypress(int key)
 		break;
 
 		case KEY_DOWN:
-			if (y < termconfig.rows && y < termconfig.entry_count) {
+			if ((y + 1) < termconfig.rows && (y + 1) < termconfig.entry_count) {
 				termconfig.entry_selected++;
-				interface_render();
-				move(y + 1, x);
+				interface_render_rows();
+				wmove(termconfig.filelist_window, y + 1, x);
 			}
 			
 			return false;
 		break;
 
 		case KEY_UP:
-			if (y > 1) {
-				termconfig.entry_selected = y - 2;
-				interface_render();
-				move(y - 1, x);
+			if (y > 0) {
+				termconfig.entry_selected = y - 1;
+				interface_render_rows();
+				wmove(termconfig.filelist_window, y - 1, x);
 			}
 			
 			return false;
@@ -141,10 +148,10 @@ interface_read_keys()
 
 	while (true) 
 	{
-		c = getch();
+		c = wgetch(termconfig.filelist_window);
 
 		if (interface_respond_to_keypress(c)) {
-			interface_render();
+			interface_render_rows();
 		}
 	}
 }

@@ -34,4 +34,6 @@ termconfig_init()
     termconfig_get_winsize(&termconfig.rows, &termconfig.cols);
     termconfig.entry_count = 0;
     termconfig.entry_selected = 0;
+    termconfig.filelist_window = newwin(termconfig.rows - 1, termconfig.cols - 1, 1, 0);
+    termconfig.statusbar_window = newwin(1, termconfig.cols - 1, 0, 0);
 }

@@ -6,17 +6,23 @@
 #include "print.h"
 
 void
-printw_spaces(int count) 
+printw_spaces(WINDOW *window, int count) 
 {
     for (int i = 0; i < (count < 0 ? 0 : count); i++) {
-        printw(" ");
+        wprintw(window, " ");
     }
+}
+
+void
+wprintw_padding(WINDOW *window, int left, int right, char *s) 
+{
+    printw_spaces(window, left);
+    wprintw(window, "%s", s);
+    printw_spaces(window, right == -1 ? (termconfig.cols - strlen(s) - left) : right);
 }
 
 void
 printw_padding(int left, int right, char *s) 
 {
-    printw_spaces(left);
-    printw("%s", s);
-    printw_spaces(right == -1 ? (termconfig.cols - strlen(s) - left) : right);
+    wprintw_padding(stdscr, left, right, s);
 }
