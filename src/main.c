@@ -77,10 +77,19 @@ interface_render_rows()
 	DIR *dir = opendir(".");
 	int i = 0;
 
+	termconfig.entry_count = 0;
+
 	while ((dirent = readdir(dir)) != NULL) 
 	{
-		if (i >= (termconfig.rows - 1)) {
-			break;
+		termconfig.entry_count++;
+
+		if (i >= (termconfig.rows + termconfig.offset_y - 1)) {
+			continue;
+		}
+
+		if (i < termconfig.offset_y) {
+			i++;
+			continue;
 		}
 
 		if (termconfig.entry_selected == i) {
@@ -95,8 +104,6 @@ interface_render_rows()
 
 		i++;
 	}
-
-	termconfig.entry_count = i;
 
 	closedir(dir);
 	wrefresh(termconfig.filelist_window);
@@ -122,20 +129,30 @@ interface_respond_to_keypress(int key)
 		break;
 
 		case KEY_DOWN:
-			if ((y + 1) < termconfig.rows && (y + 1) < termconfig.entry_count) {
-				termconfig.entry_selected++;
-				interface_render_rows();
-				wmove(termconfig.filelist_window, y + 1, x);
+			if ((termconfig.offset_y + y + 1) < termconfig.entry_count && (y + 1) >= getmaxy(termconfig.filelist_window)) {
+				termconfig.offset_y++;
 			}
+			
+			if (termconfig.entry_selected < (termconfig.entry_count - 1))
+				termconfig.entry_selected++;
+
+			interface_render_rows();
+			wmove(termconfig.filelist_window, y >= (termconfig.entry_count - 1) || (termconfig.entry_selected - 1) == termconfig.entry_count ? y : y + 1, x);
 			
 			return false;
 		break;
 
 		case KEY_UP:
-			if (y > 0) {
-				termconfig.entry_selected = y - 1;
+			if (y >= 0) {
+				if (y == 0 && termconfig.offset_y > 0) {
+					termconfig.offset_y--;
+				}
+
+				if (termconfig.entry_selected > 0)
+					termconfig.entry_selected--;
+
 				interface_render_rows();
-				wmove(termconfig.filelist_window, y - 1, x);
+				wmove(termconfig.filelist_window, termconfig.offset_y > 0 ? (y > 0 ? y - 1 : y) : termconfig.entry_selected, x);
 			}
 			
 			return false;
@@ -151,15 +168,15 @@ interface_respond_to_keypress(int key)
 static void 
 interface_read_keys()
 {	
-	int c;
+	int c = 0;
 
 	while (true) 
 	{
-		c = wgetch(termconfig.filelist_window);
-
 		if (interface_respond_to_keypress(c)) {
 			interface_render_rows();
 		}
+		
+		c = wgetch(termconfig.filelist_window);
 	}
 }
 
